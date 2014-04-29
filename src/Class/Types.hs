@@ -158,6 +158,11 @@ data AttributeInfo = ConstantValueAttribute {
   attributeNameIndex :: Word16,
   attributeLength :: Word32,
   debugExtension :: ByteString
+  } | LineNumberTableAttribute {
+  attributeNameIndex :: Word16,
+  attributeLength :: Word32,
+  lineNumberTableLength :: Word16,
+  lineNumberTable :: [LineNumberTableEntry]
   } deriving (Show)
 
 data ExceptionTableEntry = ExceptionTableEntry {
@@ -172,6 +177,11 @@ data InnerClassInfo = InnerClassInfo {
   outerClassInfoIndex :: Word16,
   innerNameIndex :: Word16,
   innerClassAccessFlags :: Word16
+  } deriving (Show)
+
+data LineNumberTableEntry = LineNumberTableEntry {
+  lineNumberStartPc :: Word16,
+  lineNumber :: Word16
   } deriving (Show)
 
 data StackMapFrame = SameFrame {
