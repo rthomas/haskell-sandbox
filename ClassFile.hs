@@ -50,9 +50,7 @@ readConstantPoolInfos i = do
 
 readConstantPoolTag :: Get Word8
 
-readConstantPoolTag = do
-  tag <- getWord8
-  return tag
+readConstantPoolTag = getWord8
 
 readConstantPoolInfo :: Word8 -> Get ConstantPoolInfo
 
@@ -120,3 +118,5 @@ readConstantPoolInfo 18 = do
   bootstrapMethodAttrIndex <- getWord16be
   nameAndTypeIndex <- getWord16be
   return $ ConstantInvokeDynamic 18 bootstrapMethodAttrIndex nameAndTypeIndex
+
+readConstantPoolInfo i = fail $ "Unknown tag: " ++ show (i)
