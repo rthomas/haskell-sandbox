@@ -133,6 +133,11 @@ data AttributeInfo = ConstantValueAttribute {
   attributeLength :: Word32,
   numberOfExceptions :: Word32,
   exceptionIndexTable :: [Word16]
+  } | InnerClassesAttribute {
+  attributeNameIndex :: Word16,
+  attributeLength :: Word32,
+  numberOfClasses :: Word16,
+  classes :: [InnerClassInfo]
   } deriving (Show)
 
 data ExceptionTableEntry = ExceptionTableEntry {
@@ -140,6 +145,13 @@ data ExceptionTableEntry = ExceptionTableEntry {
   endPc :: Word16,
   handlerPc :: Word16,
   catchType :: Word16
+  } deriving (Show)
+
+data InnerClassInfo = InnerClassInfo {
+  innerClassInfoIndex :: Word16,
+  outerClassInfoIndex :: Word16,
+  innerNameIndex :: Word16,
+  innerClassAccessFlags :: Word16
   } deriving (Show)
 
 data StackMapFrame = SameFrame {
