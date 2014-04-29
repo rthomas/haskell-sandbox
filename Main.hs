@@ -1,6 +1,6 @@
 import qualified Data.ByteString.Lazy as BL
 import Data.Binary.Get
-import ClassFile
+import ClassFileLoader
 
 main :: IO()
 main = do

@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 
 executable Main
   main-is: Main.hs            
-  ghc-options: -threaded -Wall
+  ghc-options: -threaded
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7, 

@@ -1,8 +1,8 @@
-module ClassFile where
+module ClassFileLoader where
 
 import Data.Binary.Get
 import Data.Word
-import ClassTypes
+import ClassTypes 
 
 readClass :: Get ClassFile
 
