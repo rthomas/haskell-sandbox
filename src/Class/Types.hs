@@ -143,6 +143,9 @@ data AttributeInfo = ConstantValueAttribute {
   attributeLength :: Word32,
   attributeClassIndex :: Word16,
   methodIndex :: Word16
+  } | SynthenticAttribute {
+  attributeNameIndex :: Word16,
+  attributeLength :: Word32
   } deriving (Show)
 
 data ExceptionTableEntry = ExceptionTableEntry {
