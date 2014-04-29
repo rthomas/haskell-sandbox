@@ -1,4 +1,4 @@
-module ClassTypes where
+module Class.Types where
 
 import Data.Word
 import Data.ByteString
