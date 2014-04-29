@@ -1,0 +1,9 @@
+# Building
+
+    $ cabal build
+    $ javac Test.java
+
+# Running
+
+    $ dist/build/Main/Main < Test.class
+
