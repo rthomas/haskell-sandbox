@@ -154,6 +154,10 @@ data AttributeInfo = ConstantValueAttribute {
   attributeNameIndex :: Word16,
   attributeLength :: Word32,
   sourceFileIndex :: Word16
+  } | SourceDebugExtension {
+  attributeNameIndex :: Word16,
+  attributeLength :: Word32,
+  debugExtension :: ByteString
   } deriving (Show)
 
 data ExceptionTableEntry = ExceptionTableEntry {
