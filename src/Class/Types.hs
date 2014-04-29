@@ -128,6 +128,11 @@ data AttributeInfo = ConstantValueAttribute {
   attributeLength :: Word32,
   numberOfEntries :: Word16,
   entries :: [StackMapFrame]
+  } | ExceptionsAttribute {
+  attributeNameIndex :: Word16,
+  attributeLength :: Word32,
+  numberOfExceptions :: Word32,
+  exceptionIndexTable :: [Word16]
   } deriving (Show)
 
 data ExceptionTableEntry = ExceptionTableEntry {
