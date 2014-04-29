@@ -138,6 +138,11 @@ data AttributeInfo = ConstantValueAttribute {
   attributeLength :: Word32,
   numberOfClasses :: Word16,
   classes :: [InnerClassInfo]
+  } | EnclosingMethodAttribute {
+  attributeNameIndex :: Word16,
+  attributeLength :: Word32,
+  attributeClassIndex :: Word16,
+  methodIndex :: Word16
   } deriving (Show)
 
 data ExceptionTableEntry = ExceptionTableEntry {
