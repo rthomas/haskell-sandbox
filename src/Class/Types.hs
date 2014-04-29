@@ -163,6 +163,11 @@ data AttributeInfo = ConstantValueAttribute {
   attributeLength :: Word32,
   lineNumberTableLength :: Word16,
   lineNumberTable :: [LineNumberTableEntry]
+  } | LocalVariableTableAttribute {
+  attributeNameIndex :: Word16,
+  attributeLength :: Word32,
+  localVariableTableLength :: Word16,
+  localVariableTable :: [LocalVariableTableEntry]
   } deriving (Show)
 
 data ExceptionTableEntry = ExceptionTableEntry {
@@ -182,6 +187,14 @@ data InnerClassInfo = InnerClassInfo {
 data LineNumberTableEntry = LineNumberTableEntry {
   lineNumberStartPc :: Word16,
   lineNumber :: Word16
+  } deriving (Show)
+
+data LocalVariableTableEntry = LocalVariableTableEntry {
+  localVarStartPc :: Word16,
+  localVarLength :: Word16,
+  localVarNameIndex :: Word16,
+  localVarDescriptorIndex :: Word16,
+  localVarIndex :: Word16
   } deriving (Show)
 
 data StackMapFrame = SameFrame {
