@@ -1,8 +1,14 @@
 module Class.FileLoader where
 
+import Class.Types.Attributes
+import Class.Types.ClassFile
+import Class.Types.ConstantPool
+import Class.Types.Fields
+import Class.Types.Interfaces
+import Class.Types.Methods
 import Data.Binary.Get
+import Data.ByteString
 import Data.Word
-import Class.Types 
 
 readClass :: Get ClassFile
 
@@ -10,7 +16,11 @@ readClass = do
   header <- readHeader
   constantPool <- readConstantPool
   classInfo <- readClassInfo
-  return $ ClassFile header constantPool classInfo
+  interfaces <- readInterfaces
+  fields <- readFields
+  methods <- readMethods
+  attributes <- readAttributes
+  return $ ClassFile header constantPool classInfo interfaces fields methods attributes
 
 readHeader :: Get Header
 
@@ -33,14 +43,101 @@ readClassInfo = do
   accessFlags <- getWord16be
   thisClass <- getWord16be
   superClass <- getWord16be
-  interfacesCount <- getWord16be
-  interfaces <- getByteString (fromIntegral (interfacesCount) :: Int)
-  return $ ClassInfo accessFlags thisClass superClass interfacesCount interfaces
+  return $ ClassInfo accessFlags thisClass superClass
+
+readInterfaces :: Get Interfaces
+
+readInterfaces = do
+  count <- getWord16be
+  interfaces <- readInterfacesEntries $ (fromIntegral (count) :: Int)
+  return $ Interfaces count interfaces
+
+readInterfacesEntries :: Int -> Get [Word16]
+
+readInterfacesEntries 0 = do return []
+
+readInterfacesEntries i = do
+  interfaceEntry <- getWord16be
+  interfaceList <- readInterfacesEntries (i-1)
+  return $ interfaceEntry : interfaceList
+
+readFields :: Get Fields
+
+readFields = do
+  count <- getWord16be
+  fields <- readFieldsInfos $ (fromIntegral (count) :: Int)
+  return $ Fields count fields
+
+readFieldsInfos :: Int -> Get [FieldInfo]
+
+readFieldsInfos 0 = do return []
+
+readFieldsInfos i = do
+  fieldEntry <- readFieldInfo
+  fieldEntriesList <- readFieldsInfos (i-1)
+  return $ fieldEntry : fieldEntriesList
+
+readFieldInfo :: Get FieldInfo
+
+readFieldInfo = do
+  accessFlags <- getWord16be
+  nameIndex <- getWord16be
+  descriptorIndex <- getWord16be
+  attributes <- readAttributes
+  return $ FieldInfo accessFlags nameIndex descriptorIndex attributes
+
+readMethods :: Get Methods
+
+readMethods = do
+  count <- getWord16be
+  methods <- readMethodInfos $ (fromIntegral (count) :: Int)
+  return $ Methods count methods
+
+readMethodInfos :: Int -> Get [MethodInfo]
+
+readMethodInfos 0 = do return []
+
+readMethodInfos i = do
+  methodInfo <- readMethodInfo
+  methodInfos <- readMethodInfos (i-1)
+  return $ methodInfo : methodInfos
+
+readMethodInfo :: Get MethodInfo
+
+readMethodInfo = do
+  accessFlags <- getWord16be
+  nameIndex <- getWord16be
+  descriptorIndex <- getWord16be
+  attributes <- readAttributes
+  return $ MethodInfo accessFlags nameIndex descriptorIndex attributes
+
+readAttributes :: Get Attributes
+
+readAttributes = do
+  count <- getWord16be
+  attributes <- readAttributesInfos $ (fromIntegral (count) :: Int)
+  return $ Attributes count attributes
+
+readAttributesInfos :: Int -> Get [AttributeInfo]
+
+readAttributesInfos 0 = do return []
+
+readAttributesInfos i = do
+  attributeInfo <- readAttributeInfo
+  attributeInfos <- readAttributesInfos (i-1)
+  return $ attributeInfo : attributeInfos
+
+readAttributeInfo :: Get AttributeInfo
+
+readAttributeInfo = do
+  attributeName <- getWord16be
+  attributeLength <- getWord32be
+  info <- getByteString $ (fromIntegral (attributeLength) :: Int)
+  return $ AttributeInfo attributeName attributeLength (unpack (info))
 
 readConstantPoolInfos :: Int -> Get [ConstantPoolInfo]
 
-readConstantPoolInfos 0 = do
-  return []
+readConstantPoolInfos 0 = do return []
 
 readConstantPoolInfos i = do
   tag <- readConstantPoolTag

@@ -1,4 +1,6 @@
-public class Test {
+import java.io.Serializable;
+
+public class Test implements Serializable {
     private String foo;
     private String bar = "bar";
     private static final String SOME_STRING = "SomeString";
