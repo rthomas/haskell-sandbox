@@ -26,7 +26,14 @@ readClass = do
 transformAttributes :: Attributes -> ConstantPool -> Get Attributes
 
 transformAttributes attributes constantPool = do
-  return attributes
+  return $ Attributes (attributesCount attributes) $ transformAttributeInfos (attributesInfo attributes) constantPool
+
+transformAttributeInfos :: [AttributeInfo] -> ConstantPool -> [AttributeInfo]
+
+transformAttributeInfos [] _ = []
+
+transformAttributeInfos (x:xs) constantPool = do
+  x : xs
 
 readHeader :: Get Header
 
