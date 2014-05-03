@@ -20,12 +20,12 @@ readClass = do
   fields <- readFields
   methods <- readMethods
   attributes <- readAttributes
-  transformedAttributes <- transformAttributes attributes
+  transformedAttributes <- transformAttributes attributes constantPool
   return $ ClassFile header constantPool classInfo interfaces fields methods transformedAttributes
 
-transformAttributes :: Attributes -> Get Attributes
+transformAttributes :: Attributes -> ConstantPool -> Get Attributes
 
-transformAttributes attributes = do
+transformAttributes attributes constantPool = do
   return attributes
 
 readHeader :: Get Header
