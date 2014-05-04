@@ -1,5 +1,7 @@
 module Class.FileLoader where
 
+import qualified Data.Binary.Strict.Get as BinStrict
+
 import Class.Types.Attributes
 import Class.Types.ClassFile
 import Class.Types.ConstantPool
@@ -7,10 +9,10 @@ import Class.Types.Fields
 import Class.Types.Interfaces
 import Class.Types.Methods
 import Data.Binary.Get
-import qualified Data.Binary.Strict.Get as BinStrict
 import Data.ByteString
 import Data.ByteString.UTF8
 import Data.Either
+import Data.Either.Unwrap
 import Data.Word
 import Debug.Trace
 
@@ -41,16 +43,19 @@ transformAttributeInfos (x:xs) constantPool = do
       -- The constant pool is 1-based, we need to -1 to get the correct index in our 0-based list
       attributeType = toString $ bytesString $ (cpInfo constantPool) !! ((fromIntegral nameIndex :: Int)-1)
     in
-   trace ("A: " ++ show(unpack (attributeInfo x))) (transformAttribute attributeType x) : transformAttributeInfos xs constantPool
+   -- trace ("A: " ++ show(unpack (attributeInfo x))) (transformAttribute attributeType x) : transformAttributeInfos xs constantPool
+   (transformAttribute attributeType x) : transformAttributeInfos xs constantPool
 
 transformAttribute :: String -> AttributeInfo -> AttributeInfo
 
 transformAttribute "SourceFile" attribute = do
   let sourceFileIndex = do {sfi <- BinStrict.getWord16be; return sfi} :: BinStrict.Get Word16
-      sfi = BinStrict.runGet sourceFileIndex (attributeInfo attribute)
+      (sfi, _) = BinStrict.runGet sourceFileIndex (attributeInfo attribute)
     in
-   SourceFileAttribute (attributeNameIndex attribute) (attributeLength attribute) (rights [sfi])
+   SourceFileAttribute (attributeNameIndex attribute) (attributeLength attribute) (fromRight sfi)
 
+
+  
 transformAttribute s a = error $ "Unknown attribute: " ++ s ++ " - " ++ show(a)
 
 readHeader :: Get Header
