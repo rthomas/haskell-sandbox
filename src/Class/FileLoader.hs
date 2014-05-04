@@ -48,11 +48,34 @@ transformAttributeInfos (x:xs) constantPool = do
 
 transformAttribute :: String -> AttributeInfo -> AttributeInfo
 
-transformAttribute "SourceFile" attribute = do
-  let sourceFileIndex = do {sfi <- BinStrict.getWord16be; return sfi} :: BinStrict.Get Word16
-      (sfi, _) = BinStrict.runGet sourceFileIndex (attributeInfo attribute)
+transformAttribute "ConstantValue" attribute = do
+  let getIndex = do {idx <- BinStrict.getWord16be; return idx} :: BinStrict.Get Word16
+      (idx, _) = BinStrict.runGet getIndex (attributeInfo attribute)
     in
-   SourceFileAttribute (attributeNameIndex attribute) (attributeLength attribute) (fromRight sfi)
+   ConstantValueAttribute (attributeNameIndex attribute) (attributeLength attribute) (fromRight idx)
+  
+transformAttribute "CodeAttribute" attribute = do
+  let parseCodeAttribute = do {maxStack <- getWord16be;
+                               maxLocals <- getWord16be;
+                               codeLength <- getWord32be;
+                               code <- getByteString(fromIntegral (codeLength) :: Int);
+                               exceptionTableLength <- getWord16be;
+                               exceptionTable <- transformExceptionTableEntries;
+                               attributes <- readAttributes;
+                               return $ CodeAttribute (attributeNameIndex attribute) (attributeLength attribute) maxStack maxLocals codeLength code exceptionTableLength exceptionTable attributes
+                              } :: BinStrict.Get CodeAttribute
+      (attr, _) = BinStrict.runGet parseCodeAttribute (attributeInfo attribute)
+    in
+   (fromRight attr)
+   
+  
+transformAttribute "SourceFile" attribute = do
+  let getIndex = do {idx <- BinStrict.getWord16be;
+                     return idx
+                    } :: BinStrict.Get Word16
+      (idx, _) = BinStrict.runGet getIndex (attributeInfo attribute)
+    in
+   SourceFileAttribute (attributeNameIndex attribute) (attributeLength attribute) (fromRight idx)
 
 
   
