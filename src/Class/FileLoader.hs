@@ -8,7 +8,9 @@ import Class.Types.Interfaces
 import Class.Types.Methods
 import Data.Binary.Get
 import Data.ByteString
+import Data.ByteString.UTF8
 import Data.Word
+import Debug.Trace
 
 readClass :: Get ClassFile
 
@@ -33,8 +35,16 @@ transformAttributeInfos :: [AttributeInfo] -> ConstantPool -> [AttributeInfo]
 transformAttributeInfos [] _ = []
 
 transformAttributeInfos (x:xs) constantPool = do
-  x : xs
+  let nameIndex = (attributeNameIndex x)
+      -- The constant pool is 1-based, we need to -1 to get the correct index in our 0-based list
+      attributeType = constantStringValue $ (cpInfo constantPool) !! ((fromIntegral nameIndex :: Int)-1)
+    in
+   trace ("A: " ++ show(attributeType)) x : transformAttributeInfos xs constantPool
 
+constantStringValue :: ConstantPoolInfo -> String
+
+constantStringValue cUtf8 = toString $ bytesString cUtf8
+  
 readHeader :: Get Header
 
 readHeader = do
