@@ -37,14 +37,10 @@ transformAttributeInfos [] _ = []
 transformAttributeInfos (x:xs) constantPool = do
   let nameIndex = (attributeNameIndex x)
       -- The constant pool is 1-based, we need to -1 to get the correct index in our 0-based list
-      attributeType = constantStringValue $ (cpInfo constantPool) !! ((fromIntegral nameIndex :: Int)-1)
+      attributeType = toString $ bytesString $ (cpInfo constantPool) !! ((fromIntegral nameIndex :: Int)-1)
     in
    trace ("A: " ++ show(attributeType)) x : transformAttributeInfos xs constantPool
 
-constantStringValue :: ConstantPoolInfo -> String
-
-constantStringValue cUtf8 = toString $ bytesString cUtf8
-  
 readHeader :: Get Header
 
 readHeader = do
