@@ -53,13 +53,13 @@ transformAttribute "ConstantValue" _ attribute = do
     in
    ConstantValueAttribute (attributeNameIndex attribute) (attributeLength attribute) idx
   
-transformAttribute "CodeAttribute" constantPool attribute = do
+transformAttribute "Code" constantPool attribute = do
   let parseCodeAttribute = do {maxStack <- getWord16be;
                                maxLocals <- getWord16be;
                                codeLength <- getWord32be;
                                code <- getByteString(fromIntegral (codeLength) :: Int);
                                exceptionTableLength <- getWord16be;
-                               -- exceptionTable <- transformExceptionTableEntries;
+                               -- exceptionTable <- transformExceptionTableEntries exceptionTableLength;
                                attributes <- readAttributes constantPool;
                                return $ CodeAttribute (attributeNameIndex attribute)(attributeLength attribute) maxStack maxLocals codeLength (unpack code) exceptionTableLength [] attributes} :: Get AttributeInfo
       attr = runGet parseCodeAttribute (BSL.pack (attributeInfo attribute))
@@ -76,7 +76,9 @@ transformAttribute "SourceFile" _ attribute = do
 
 
   
-transformAttribute s _ a = error $ "Unknown attribute: " ++ s ++ " - " ++ show(a)
+transformAttribute s _ a =
+  trace ("Unknown attribute: " ++ s ++ " - " ++ show(a)) a
+  --error $ "Unknown attribute: " ++ s ++ " - " ++ show(a)
 
 readHeader :: Get Header
 

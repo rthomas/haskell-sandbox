@@ -8,4 +8,5 @@ main = do
   input <- BL.getContents
   let classFile = runGet readClass input
   -- print $ length $ show classFile
-  print $ (attributes classFile)
+  -- print $ (attributes classFile)
+  print classFile
