@@ -25,7 +25,6 @@ executable Main
                        binary >=0.7 && <0.8,
                        binary-strict >= 0.4.8, 
                        bytestring >=0.10 && <0.11,
-                       either-unwrap >= 1.1,
                        utf8-string  >= 0.3.7
   -- hs-source-dirs:      
   default-language:    Haskell2010

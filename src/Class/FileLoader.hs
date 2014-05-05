@@ -1,6 +1,7 @@
 module Class.FileLoader where
 
-import qualified Data.Binary.Strict.Get as BinStrict
+--import qualified Data.Binary.Strict.Get as BinStrict
+import qualified Data.ByteString.Lazy as BSL
 
 import Class.Types.Attributes
 import Class.Types.ClassFile
@@ -12,7 +13,6 @@ import Data.Binary.Get
 import Data.ByteString
 import Data.ByteString.UTF8
 import Data.Either
-import Data.Either.Unwrap
 import Data.Word
 import Debug.Trace
 
@@ -49,33 +49,32 @@ transformAttributeInfos (x:xs) constantPool = do
 transformAttribute :: String -> AttributeInfo -> AttributeInfo
 
 transformAttribute "ConstantValue" attribute = do
-  let getIndex = do {idx <- BinStrict.getWord16be; return idx} :: BinStrict.Get Word16
-      (idx, _) = BinStrict.runGet getIndex (attributeInfo attribute)
+  let getIndex = do {idx <- getWord16be; return idx} :: Get Word16
+      idx = runGet getIndex (BSL.pack (attributeInfo attribute))
     in
-   ConstantValueAttribute (attributeNameIndex attribute) (attributeLength attribute) (fromRight idx)
+   ConstantValueAttribute (attributeNameIndex attribute) (attributeLength attribute) idx
   
-transformAttribute "CodeAttribute" attribute = do
-  let parseCodeAttribute = do {maxStack <- getWord16be;
-                               maxLocals <- getWord16be;
-                               codeLength <- getWord32be;
-                               code <- getByteString(fromIntegral (codeLength) :: Int);
-                               exceptionTableLength <- getWord16be;
-                               exceptionTable <- transformExceptionTableEntries;
-                               attributes <- readAttributes;
-                               return $ CodeAttribute (attributeNameIndex attribute) (attributeLength attribute) maxStack maxLocals codeLength code exceptionTableLength exceptionTable attributes
-                              } :: BinStrict.Get CodeAttribute
-      (attr, _) = BinStrict.runGet parseCodeAttribute (attributeInfo attribute)
-    in
-   (fromRight attr)
+--transformAttribute "CodeAttribute" attribute = do
+--  let parseCodeAttribute = do {maxStack <- getWord16be;
+--                               maxLocals <- getWord16be;
+--                               codeLength <- getWord32be;
+--                               code <- getByteString(fromIntegral (codeLength) :: Int);
+--                               exceptionTableLength <- getWord16be;
+--                               -- exceptionTable <- transformExceptionTableEntries;
+--                               attributes <- readAttributes;
+--                               return $ CodeAttribute (attributeNameIndex attribute)(attributeLength attribute) maxStack maxLocals codeLength (unpack code) exceptionTableLength [] attributes} :: BinStrict.Get AttributeInfo
+--      (attr, _) = BinStrict.runGet parseCodeAttribute (attributeInfo attribute)
+--    in
+--   (fromRight attr)
    
   
 transformAttribute "SourceFile" attribute = do
-  let getIndex = do {idx <- BinStrict.getWord16be;
+  let getIndex = do {idx <- getWord16be;
                      return idx
-                    } :: BinStrict.Get Word16
-      (idx, _) = BinStrict.runGet getIndex (attributeInfo attribute)
+                    } :: Get Word16
+      idx = runGet getIndex (BSL.pack (attributeInfo attribute))
     in
-   SourceFileAttribute (attributeNameIndex attribute) (attributeLength attribute) (fromRight idx)
+   SourceFileAttribute (attributeNameIndex attribute) (attributeLength attribute) idx
 
 
   
@@ -192,7 +191,7 @@ readAttributeInfo = do
   attributeName <- getWord16be
   attributeLength <- getWord32be
   info <- getByteString $ (fromIntegral (attributeLength) :: Int)
-  return $ AttributeInfo attributeName attributeLength info
+  return $ AttributeInfo attributeName attributeLength (unpack info)
 
 readConstantPoolInfos :: Int -> Get [ConstantPoolInfo]
 

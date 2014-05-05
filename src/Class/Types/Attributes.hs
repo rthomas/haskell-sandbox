@@ -11,7 +11,7 @@ data Attributes = Attributes {
 data AttributeInfo = AttributeInfo {
   attributeNameIndex :: Word16,
   attributeLength :: Word32,
-  attributeInfo :: ByteString
+  attributeInfo :: [Word8]
   } | ConstantValueAttribute {
   attributeNameIndex :: Word16,
   attributeLength :: Word32,
