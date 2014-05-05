@@ -25,9 +25,8 @@ readClass = do
   interfaces <- readInterfaces
   fields <- readFields constantPool
   methods <- readMethods constantPool
-  attributes <- readAttributes
-  transformedAttributes <- transformAttributes attributes constantPool
-  return $ ClassFile header constantPool classInfo interfaces fields methods transformedAttributes
+  attributes <- readAttributes constantPool
+  return $ ClassFile header constantPool classInfo interfaces fields methods attributes
 
 transformAttributes :: Attributes -> ConstantPool -> Get Attributes
 
@@ -61,9 +60,8 @@ transformAttribute "CodeAttribute" constantPool attribute = do
                                code <- getByteString(fromIntegral (codeLength) :: Int);
                                exceptionTableLength <- getWord16be;
                                -- exceptionTable <- transformExceptionTableEntries;
-                               attributes <- readAttributes;
-                               transformedAttributes <- transformAttributes attributes constantPool;
-                               return $ CodeAttribute (attributeNameIndex attribute)(attributeLength attribute) maxStack maxLocals codeLength (unpack code) exceptionTableLength [] transformedAttributes} :: Get AttributeInfo
+                               attributes <- readAttributes constantPool;
+                               return $ CodeAttribute (attributeNameIndex attribute)(attributeLength attribute) maxStack maxLocals codeLength (unpack code) exceptionTableLength [] attributes} :: Get AttributeInfo
       attr = runGet parseCodeAttribute (BSL.pack (attributeInfo attribute))
     in
    attr
@@ -141,9 +139,8 @@ readFieldInfo constantPool = do
   accessFlags <- getWord16be
   nameIndex <- getWord16be
   descriptorIndex <- getWord16be
-  attributes <- readAttributes
-  transformedAttributes <- transformAttributes attributes constantPool
-  return $ FieldInfo accessFlags nameIndex descriptorIndex transformedAttributes
+  attributes <- readAttributes constantPool
+  return $ FieldInfo accessFlags nameIndex descriptorIndex attributes
 
 readMethods :: ConstantPool -> Get Methods
 
@@ -167,16 +164,15 @@ readMethodInfo constantPool = do
   accessFlags <- getWord16be
   nameIndex <- getWord16be
   descriptorIndex <- getWord16be
-  attributes <- readAttributes
-  transformedAttributes <- transformAttributes attributes constantPool
+  attributes <- readAttributes constantPool
   return $ MethodInfo accessFlags nameIndex descriptorIndex attributes
 
-readAttributes :: Get Attributes
+readAttributes :: ConstantPool -> Get Attributes
 
-readAttributes = do
+readAttributes constantPool = do
   count <- getWord16be
   attributes <- readAttributesInfos $ (fromIntegral (count) :: Int)
-  return $ Attributes count attributes
+  transformAttributes (Attributes count attributes) constantPool
 
 readAttributesInfos :: Int -> Get [AttributeInfo]
 
