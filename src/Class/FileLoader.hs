@@ -23,8 +23,8 @@ readClass = do
   constantPool <- readConstantPool
   classInfo <- readClassInfo
   interfaces <- readInterfaces
-  fields <- readFields
-  methods <- readMethods
+  fields <- readFields constantPool
+  methods <- readMethods constantPool
   attributes <- readAttributes
   transformedAttributes <- transformAttributes attributes constantPool
   return $ ClassFile header constantPool classInfo interfaces fields methods transformedAttributes
@@ -44,31 +44,31 @@ transformAttributeInfos (x:xs) constantPool = do
       attributeType = toString $ bytesString $ (cpInfo constantPool) !! ((fromIntegral nameIndex :: Int)-1)
     in
    -- trace ("A: " ++ show(unpack (attributeInfo x))) (transformAttribute attributeType x) : transformAttributeInfos xs constantPool
-   (transformAttribute attributeType x) : transformAttributeInfos xs constantPool
+   (transformAttribute attributeType constantPool x) : transformAttributeInfos xs constantPool
 
-transformAttribute :: String -> AttributeInfo -> AttributeInfo
+transformAttribute :: String -> ConstantPool -> AttributeInfo -> AttributeInfo
 
-transformAttribute "ConstantValue" attribute = do
+transformAttribute "ConstantValue" _ attribute = do
   let getIndex = do {idx <- getWord16be; return idx} :: Get Word16
       idx = runGet getIndex (BSL.pack (attributeInfo attribute))
     in
    ConstantValueAttribute (attributeNameIndex attribute) (attributeLength attribute) idx
   
---transformAttribute "CodeAttribute" attribute = do
---  let parseCodeAttribute = do {maxStack <- getWord16be;
---                               maxLocals <- getWord16be;
---                               codeLength <- getWord32be;
---                               code <- getByteString(fromIntegral (codeLength) :: Int);
---                               exceptionTableLength <- getWord16be;
---                               -- exceptionTable <- transformExceptionTableEntries;
---                               attributes <- readAttributes;
---                               return $ CodeAttribute (attributeNameIndex attribute)(attributeLength attribute) maxStack maxLocals codeLength (unpack code) exceptionTableLength [] attributes} :: BinStrict.Get AttributeInfo
---      (attr, _) = BinStrict.runGet parseCodeAttribute (attributeInfo attribute)
---    in
---   (fromRight attr)
+transformAttribute "CodeAttribute" constantPool attribute = do
+  let parseCodeAttribute = do {maxStack <- getWord16be;
+                               maxLocals <- getWord16be;
+                               codeLength <- getWord32be;
+                               code <- getByteString(fromIntegral (codeLength) :: Int);
+                               exceptionTableLength <- getWord16be;
+                               -- exceptionTable <- transformExceptionTableEntries;
+                               attributes <- readAttributes;
+                               transformedAttributes <- transformAttributes attributes constantPool;
+                               return $ CodeAttribute (attributeNameIndex attribute)(attributeLength attribute) maxStack maxLocals codeLength (unpack code) exceptionTableLength [] transformedAttributes} :: Get AttributeInfo
+      attr = runGet parseCodeAttribute (BSL.pack (attributeInfo attribute))
+    in
+   attr
    
-  
-transformAttribute "SourceFile" attribute = do
+transformAttribute "SourceFile" _ attribute = do
   let getIndex = do {idx <- getWord16be;
                      return idx
                     } :: Get Word16
@@ -78,7 +78,7 @@ transformAttribute "SourceFile" attribute = do
 
 
   
-transformAttribute s a = error $ "Unknown attribute: " ++ s ++ " - " ++ show(a)
+transformAttribute s _ a = error $ "Unknown attribute: " ++ s ++ " - " ++ show(a)
 
 readHeader :: Get Header
 
@@ -119,54 +119,56 @@ readInterfacesEntries i = do
   interfaceList <- readInterfacesEntries (i-1)
   return $ interfaceEntry : interfaceList
 
-readFields :: Get Fields
+readFields :: ConstantPool -> Get Fields
 
-readFields = do
+readFields constantPool = do
   count <- getWord16be
-  fields <- readFieldsInfos $ (fromIntegral (count) :: Int)
+  fields <- readFieldsInfos (fromIntegral (count) :: Int) constantPool
   return $ Fields count fields
 
-readFieldsInfos :: Int -> Get [FieldInfo]
+readFieldsInfos :: Int -> ConstantPool -> Get [FieldInfo]
 
-readFieldsInfos 0 = do return []
+readFieldsInfos 0 _ = do return []
 
-readFieldsInfos i = do
-  fieldEntry <- readFieldInfo
-  fieldEntriesList <- readFieldsInfos (i-1)
+readFieldsInfos i constantPool = do
+  fieldEntry <- readFieldInfo constantPool
+  fieldEntriesList <- readFieldsInfos (i-1) constantPool
   return $ fieldEntry : fieldEntriesList
 
-readFieldInfo :: Get FieldInfo
+readFieldInfo :: ConstantPool -> Get FieldInfo
 
-readFieldInfo = do
+readFieldInfo constantPool = do
   accessFlags <- getWord16be
   nameIndex <- getWord16be
   descriptorIndex <- getWord16be
   attributes <- readAttributes
-  return $ FieldInfo accessFlags nameIndex descriptorIndex attributes
+  transformedAttributes <- transformAttributes attributes constantPool
+  return $ FieldInfo accessFlags nameIndex descriptorIndex transformedAttributes
 
-readMethods :: Get Methods
+readMethods :: ConstantPool -> Get Methods
 
-readMethods = do
+readMethods constantPool = do
   count <- getWord16be
-  methods <- readMethodInfos $ (fromIntegral (count) :: Int)
+  methods <- readMethodInfos (fromIntegral (count) :: Int) constantPool
   return $ Methods count methods
 
-readMethodInfos :: Int -> Get [MethodInfo]
+readMethodInfos :: Int -> ConstantPool -> Get [MethodInfo]
 
-readMethodInfos 0 = do return []
+readMethodInfos 0 _ = do return []
 
-readMethodInfos i = do
-  methodInfo <- readMethodInfo
-  methodInfos <- readMethodInfos (i-1)
+readMethodInfos i constantPool = do
+  methodInfo <- readMethodInfo constantPool
+  methodInfos <- readMethodInfos (i-1) constantPool
   return $ methodInfo : methodInfos
 
-readMethodInfo :: Get MethodInfo
+readMethodInfo :: ConstantPool -> Get MethodInfo
 
-readMethodInfo = do
+readMethodInfo constantPool = do
   accessFlags <- getWord16be
   nameIndex <- getWord16be
   descriptorIndex <- getWord16be
   attributes <- readAttributes
+  transformedAttributes <- transformAttributes attributes constantPool
   return $ MethodInfo accessFlags nameIndex descriptorIndex attributes
 
 readAttributes :: Get Attributes
