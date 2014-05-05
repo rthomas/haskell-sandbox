@@ -1,5 +1,6 @@
 module Class.Types.Attributes where
 
+import Data.ByteString
 import Data.Word
 
 data Attributes = Attributes {
@@ -10,7 +11,7 @@ data Attributes = Attributes {
 data AttributeInfo = AttributeInfo {
   attributeNameIndex :: Word16,
   attributeLength :: Word32,
-  attributeInfo :: [Word8]
+  attributeInfo :: ByteString
   } | ConstantValueAttribute {
   attributeNameIndex :: Word16,
   attributeLength :: Word32,
