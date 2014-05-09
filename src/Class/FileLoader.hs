@@ -59,13 +59,13 @@ transformAttribute "Code" constantPool attribute = do
                                codeLength <- getWord32be;
                                code <- getByteString(fromIntegral (codeLength) :: Int);
                                exceptionTableLength <- getWord16be;
-                               -- exceptionTable <- transformExceptionTableEntries exceptionTableLength;
+                               exceptionTable <- transformExceptionTableEntries (fromIntegral(exceptionTableLength) :: Int);
                                attributes <- readAttributes constantPool;
-                               return $ CodeAttribute (attributeNameIndex attribute)(attributeLength attribute) maxStack maxLocals codeLength (unpack code) exceptionTableLength [] attributes} :: Get AttributeInfo
+                               return $ CodeAttribute (attributeNameIndex attribute)(attributeLength attribute) maxStack maxLocals codeLength (unpack code) exceptionTableLength exceptionTable attributes} :: Get AttributeInfo
       attr = runGet parseCodeAttribute (BSL.pack (attributeInfo attribute))
     in
    attr
-   
+  
 transformAttribute "SourceFile" _ attribute = do
   let getIndex = do {idx <- getWord16be;
                      return idx
@@ -74,11 +74,21 @@ transformAttribute "SourceFile" _ attribute = do
     in
    SourceFileAttribute (attributeNameIndex attribute) (attributeLength attribute) idx
 
-
-  
 transformAttribute s _ a =
   trace ("Unknown attribute: " ++ s ++ " - " ++ show(a)) a
   --error $ "Unknown attribute: " ++ s ++ " - " ++ show(a)
+
+transformExceptionTableEntries :: Int -> Get [ExceptionTableEntry]
+
+transformExceptionTableEntries 0 = return []
+
+transformExceptionTableEntries i = do
+  startPc <- getWord16be
+  endPc <- getWord16be
+  handlerPc <- getWord16be
+  catchType <- getWord16be
+  rest <- transformExceptionTableEntries (i-1)
+  return $ ExceptionTableEntry startPc endPc handlerPc catchType : rest
 
 readHeader :: Get Header
 
